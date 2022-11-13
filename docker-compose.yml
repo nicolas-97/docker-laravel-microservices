@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  ngrok:
+    image: shkoliar/ngrok:latest
+    ports:
+      - 4551:4551
+    enviroment:
+      - DOMAIN=gateway
+      - PORT=80
+    depends_on:
+      - db
+      - gateway
+    networks:
+      - app-network
+  
+  gateway:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "./nginx/fastcgi.conf:/etc/nginx/fastcgi.conf"
+      - "./nginx/sites:/etc/nginx/conf.d/"
+    depends_on:
+      - db
+    networks:
+      - app-network
+  
+  db:
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE
+    restart: always
+    environment:
+      - MYSQL_DATABASE=db
+      - MYSQL_ROOT_PASSWORD=mauFJcuf5dhRMQrjj
+    ports:
+      - '3306:3306'
+    volumes:
+      - db:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  volumes:
+    db:
+      driver: local
+
+  networks:
+    app-network:
+      driver: bridge
+
+  
